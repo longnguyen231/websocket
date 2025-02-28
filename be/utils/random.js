@@ -31,14 +31,16 @@ const generateUniqueColor = async () => {
 };
 
 // Hàm tạo chấm ngẫu nhiên không trùng
-const generateUniqueDot = async (socketId) => {
+const generateUniqueDot = async (socketId,userIP) => {
     const position = await generateUniquePosition();
     const color = await generateUniqueColor();
 
+    console.log ( "generating dot with" , {socketId, userIP})
     return new Dot({
         socketId,
         position,
         color,
+        userIP
     });
 };
 

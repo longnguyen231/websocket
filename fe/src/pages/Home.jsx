@@ -3,7 +3,7 @@ import useSocket from "../hooks/useSocket";
 import Dot from "../components/Dot";
 
 const Home = () => {
-    const { socket, dots } = useSocket();
+    const { socket, dots, setDots } = useSocket(); // Thêm setDots để cập nhật danh sách
     const [userDotId, setUserDotId] = useState(null);
 
     const handleHoldDot = (dotId) => {
@@ -14,52 +14,64 @@ const Home = () => {
         socket.emit("glowDot", dotId);
     };
 
-    // Khi bấm nút, làm chấm của user sáng lên
     const handleGlowMyDot = () => {
         if (userDotId && socket) {
-            console.log("✨ Emitting glowDot for userDotId:", userDotId);
+            console.log("✨ Emitting glowMyDot for userDotId:", userDotId);
             socket.emit("glowDot", userDotId);
         } else {
             console.warn("❌ UserDotId is null, cannot glow.");
         }
     };
 
-    // Xác định chấm của user khi nhận danh sách chấm từ server
     useEffect(() => {
-        if (socket) {
-            const updateUserDot = (dotsList) => {
-                const myDot = dotsList.find((dot) => dot.socketId === socket.id);
-                if (myDot) {
-                    console.log("✅ Found my dot:", myDot);
-                    setUserDotId(myDot._id);
-                }
-            };
+        if (!socket) return;
 
-            // Nhận danh sách dots hiện có
-            socket.on("existingDots", updateUserDot);
+        const updateUserDot = (dotsList) => {
+            setDots(dotsList); // Cập nhật danh sách dots
+            const myDot = dotsList.find((dot) => dot.socketId === socket.id);
+            if (myDot) {
+                console.log("✅ Found my dot:", myDot);
+                setUserDotId(myDot._id);
+            }
+        };
 
-            // Nhận dot mới (nếu user vừa tạo dot mới)
-            socket.on("newDot", (dot) => {
-                if (dot.socketId === socket.id) {
-                    console.log("🔵 My new dot:", dot);
-                    setUserDotId(dot._id);
-                }
-            });
+        const removeDot = (socketId) => {
+            console.log(`❌ Removing dot of disconnected user: ${socketId}`);
+            setDots((prevDots) => prevDots.filter((dot) => dot.socketId !== socketId));
+        };
 
-            return () => {
-                socket.off("existingDots", updateUserDot);
-                socket.off("newDot");
-            };
-        }
-    }, [socket]);
+        socket.on("existingDots", updateUserDot);
+        socket.on("newDot", (dot) => {
+            setDots((prevDots) => [...prevDots, dot]);
+            if (dot.socketId === socket.id) {
+                setUserDotId(dot._id);
+            }
+        });
+
+        socket.on("removeDot", removeDot); // Lắng nghe sự kiện xóa chấm
+
+        return () => {
+            socket.off("existingDots", updateUserDot);
+            socket.off("newDot");
+            socket.off("removeDot", removeDot);
+        };
+    }, [socket, setDots]);
 
     return (
-        <div style={{ width: "100vw", height: "100vh", backgroundColor: "#222", position: "relative" }}>
+        <div
+            style={{
+                width: "100vw",
+                height: "100vh",
+                backgroundColor: "#000", // Đổi nền thành màu đen hoàn toàn
+                position: "fixed", // Cố định toàn màn hình
+                top: 0,
+                left: 0,
+            }}
+        >
             {dots.map((dot) => (
                 <Dot key={dot._id} dot={dot} onHold={handleHoldDot} onClick={handleClickDot} />
             ))}
 
-            {/* Nút bấm để làm sáng chấm của user */}
             <button
                 onClick={handleGlowMyDot}
                 style={{

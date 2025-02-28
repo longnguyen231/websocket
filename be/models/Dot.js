@@ -7,7 +7,7 @@ const dotSchema = new mongoose.Schema({
         y: { type: Number, required: true },
     },
     socketId: { type: String, required: true }, 
-    userIp: { type: String, default: null }, 
+    userIP: { type: String, default: null }, 
     isGlowing: { type: Boolean, default: false }, 
 }, { timestamps: true });
 
