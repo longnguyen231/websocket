@@ -7,11 +7,15 @@ const Home = () => {
     const [userDotId, setUserDotId] = useState(null);
 
     const handleHoldDot = (dotId) => {
-        socket.emit("holdDot", dotId);
+        if (socket) {
+            socket.emit("holdDot", dotId);
+        }
     };
 
     const handleClickDot = (dotId) => {
-        socket.emit("glowDot", dotId);
+        if (socket) {
+            socket.emit("glowDot", dotId);
+        }
     };
 
     const handleGlowMyDot = () => {
@@ -19,7 +23,7 @@ const Home = () => {
             console.log("✨ Emitting glowMyDot for userDotId:", userDotId);
             socket.emit("glowDot", userDotId);
         } else {
-            console.warn("❌ UserDotId is null, cannot glow.");
+            console.warn("❌ UserDotId is null or socket is not connected.");
         }
     };
 
@@ -40,16 +44,22 @@ const Home = () => {
             setDots((prevDots) => prevDots.filter((dot) => dot.socketId !== socketId));
         };
 
+        // Lắng nghe sự kiện từ server
         socket.on("existingDots", updateUserDot);
         socket.on("newDot", (dot) => {
-            setDots((prevDots) => [...prevDots, dot]);
+            setDots((prevDots) => {
+                if (!prevDots.some((existingDot) => existingDot._id === dot._id)) {
+                    return [...prevDots, dot];
+                }
+                return prevDots;
+            });
             if (dot.socketId === socket.id) {
                 setUserDotId(dot._id);
             }
         });
-
         socket.on("removeDot", removeDot); // Lắng nghe sự kiện xóa chấm
 
+        // Dọn dẹp sự kiện khi component unmount
         return () => {
             socket.off("existingDots", updateUserDot);
             socket.off("newDot");

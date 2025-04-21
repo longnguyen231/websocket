@@ -7,7 +7,7 @@ const useSocket = () => {
     const [userDotId, setUserDotId] = useState(null);
 
     useEffect(() => {
-        const newSocket = io("http://192.168.1.117:5000", { transports: ["websocket"] });
+        const newSocket = io("http://103.252.73.156:5001", { transports: ["websocket"] });
         setSocket(newSocket);
 
         newSocket.on("existingDots", (receivedDots) => {
@@ -57,6 +57,11 @@ const useSocket = () => {
                     dot._id === dotId ? { ...dot, userIp: userIP || "Không rõ" } : dot
                 )
             );
+        });
+        
+        newSocket.on("removeDot", (socketId) => {
+            console.log(`❌ Removing dot of disconnected user: ${socketId}`);
+            setDots((prevDots) => prevDots.filter((dot) => dot.socketId !== socketId));
         });
 
         return () => {

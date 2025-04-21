@@ -57,6 +57,8 @@ io.on("connection", async (client) => {
     });
 
     // 🔹 Khi user muốn làm sáng chấm của chính họ
+
+    // chỉ emit cho client đó thôi 
     client.on("glowMyDot", async () => {
         try {
             const userDot = await Dot.findOne({ socketId: client.id });
@@ -75,6 +77,7 @@ io.on("connection", async (client) => {
 
         try {
             await Dot.findOneAndDelete({ socketId: client.id });
+            console.log(`❌ delete sockket`);
             io.emit("removeDot", client.id);
         } catch (error) {
             console.error("❌ Error removing dot:", error);
